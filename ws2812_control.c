@@ -1,7 +1,7 @@
 /**
  * @file ws2812_control.c
  * @author 宁子希
- * @brief    WS2812灯条控制,使用RMT驱动
+ * @brief    WS2812灯条控制
  * @version 0.1
  * @date 2024-08-31
  * 
@@ -79,6 +79,7 @@ void led_strip_hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t
         break;
     }
 }
+
 // 设置 LED 颜色(单个)
 void set_led_color(led_strip_t *strip,int index, led_color_t color) {
     if (index >= 0 && index < CONFIG_EXAMPLE_STRIP_LED_NUMBER) {
@@ -212,6 +213,12 @@ void ws2812_set(led_strip_t *strip, led_color_t color, led_effect_t effect){
     }
 }
 
+// 更新LED显示
+void update_led_display(led_strip_t *strip) {
+    strip->refresh(strip, 100);
+}
+
+// 创建WS2812控制句柄
 led_strip_t* ws2812_create() {
     // 初始化WS2812控制任务
     rmt_config_t config = RMT_DEFAULT_CONFIG_TX(CONFIG_EXAMPLE_RMT_TX_GPIO, RMT_TX_CHANNEL);

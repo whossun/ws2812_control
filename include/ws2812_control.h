@@ -1,3 +1,13 @@
+/**
+ * @file ws2812_control.h
+ * @author 宁子希
+ * @brief    WS2812灯条控制
+ * @version 0.1
+ * @date 2024-08-31
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
 #ifndef WS2812_CONTROL_H
 #define WS2812_CONTROL_H
 
@@ -6,6 +16,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -56,17 +67,93 @@ typedef enum {
     LED_EFFECT_RAINBOW
 } led_effect_t;
 
+/**
+ * @brief  创建WS2812控制句柄
+ * 
+ * @return led_strip_t* - WS2812控制句柄
+ */
+led_strip_t* ws2812_create();
 
-led_strip_t* ws2812_create(); // WS2812初始化
-void set_led_color(led_strip_t *strip,int index, led_color_t color);    // 设置 LED 颜色(单个)
-void led_set_on(led_strip_t *strip, led_color_t color); // LED 常亮
-void led_set_off(led_strip_t *strip);       // LED 关闭
-void led_set_breath(led_strip_t *strip, led_color_t color); // LED 呼吸效果
-void led_set_fade_in(led_strip_t *strip, led_color_t color);    // LED 缓缓亮起
-void led_set_blink_slow(led_strip_t *strip, led_color_t color,int count); // LED 微微闪烁
-void led_set_blink_fast(led_strip_t *strip, led_color_t color,int count); // LED 快速闪烁
-void led_set_rainbow(led_strip_t *strip);   // 彩虹效果
-void ws2812_set(led_strip_t *strip, led_color_t color, led_effect_t effect); //自选效果
+/**
+ * @brief 设置单个LED的颜色
+ * 
+ * @param strip - WS2812控制句柄
+ * @param index - LED的索引
+ * @param color - LED的颜色
+ */
+void set_led_color(led_strip_t *strip, int index, led_color_t color);
+
+/**
+ * @brief 使所有LED常亮
+ * 
+ * @param strip - WS2812控制句柄
+ * @param color - LED的颜色
+ */
+void led_set_on(led_strip_t *strip, led_color_t color);
+
+/**
+ * @brief 关闭所有LED
+ * 
+ * @param strip - WS2812控制句柄
+ */
+void led_set_off(led_strip_t *strip);
+
+/**
+ * @brief 使所有LED呼吸效果
+ * 
+ * @param strip - WS2812控制句柄
+ * @param color - LED的颜色
+ */
+void led_set_breath(led_strip_t *strip, led_color_t color);
+
+/**
+ * @brief 使所有LED缓缓亮起
+ * 
+ * @param strip - WS2812控制句柄
+ * @param color - LED的颜色
+ */
+void led_set_fade_in(led_strip_t *strip, led_color_t color);
+
+/**
+ * @brief 使所有LED微微闪烁
+ * 
+ * @param strip - WS2812控制句柄
+ * @param color - LED的颜色
+ * @param count - 闪烁次数
+ */
+void led_set_blink_slow(led_strip_t *strip, led_color_t color, int count);
+
+/**
+ * @brief 使所有LED快速闪烁
+ * 
+ * @param strip - WS2812控制句柄
+ * @param color - LED的颜色
+ * @param count - 闪烁次数
+ */
+void led_set_blink_fast(led_strip_t *strip, led_color_t color, int count);
+
+/**
+ * @brief 使所有LED彩虹效果
+ * 
+ * @param strip - WS2812控制句柄
+ */
+void led_set_rainbow(led_strip_t *strip);
+
+/**
+ * @brief 自选LED效果
+ * 
+ * @param strip - WS2812控制句柄
+ * @param color - LED的颜色
+ * @param effect - LED的效果类型
+ */
+void ws2812_set(led_strip_t *strip, led_color_t color, led_effect_t effect);
+
+/**
+ * @brief 更新LED显示
+ * 
+ * @param strip - WS2812控制句柄
+ */
+void update_led_display(led_strip_t *strip);
 
 #ifdef __cplusplus
 }
