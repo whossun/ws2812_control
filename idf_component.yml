@@ -1,7 +1,7 @@
 version: 1.0.0
 license: "MIT"
 description: ws2812_control
-url: https://github.com/my_Namespace/ws2812_control
+url: https://github.com/NingZiXi/ws2812_control
 files:
   exclude:
   - .git
