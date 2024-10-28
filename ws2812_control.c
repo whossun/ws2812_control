@@ -212,7 +212,7 @@ void ws2812_set(led_strip_t *strip, led_color_t color, led_effect_t effect){
     }
 }
 
-led_strip_t* ws2812_init() {
+led_strip_t* ws2812_create() {
     // 初始化WS2812控制任务
     rmt_config_t config = RMT_DEFAULT_CONFIG_TX(CONFIG_EXAMPLE_RMT_TX_GPIO, RMT_TX_CHANNEL);
     config.clk_div = 2;
@@ -231,36 +231,4 @@ led_strip_t* ws2812_init() {
     return strip;
 }
 
-//WS2812控制任务
-void ws2812_control_task(void* arg)
-{
-
-    led_strip_t* strip=ws2812_init();
-    led_color_t color_white = {255, 255, 255};  // 设置颜色为白色
-    led_color_t color_green = {0, 255, 0};      // 设置颜色为绿色
-    led_color_t color_red = {255, 0, 0};        // 设置颜色为红色
-    led_color_t color_blue = {0, 0, 255};       // 设置颜色为蓝色
-
-    ESP_LOGI(TAG, "WS2812控制任务启动");
-
-    /*    
-    ----------------------------------------业务代码开始----------------------------------------------
-    控制流程：
-    */
-    ws2812_recv_data_t message; // 创建一个消息结构体
-    while (1) {
-        if (xQueueReceive(ws2812_queue, &message, portMAX_DELAY) == pdPASS) {
-            float theta = message.theta;
-            // 计算 LED 索引
-            int led_index = (int)((theta + 180.0) / 360.0 * CONFIG_EXAMPLE_RMT_TX_GPIO) % CONFIG_EXAMPLE_RMT_TX_GPIO;
-            printf("led_index: %d\n", led_index);
-            // 设置 LED 颜色
-            if (led_index>=0&&led_index<CONFIG_EXAMPLE_STRIP_LED_NUMBER){
-                set_led_color(strip,led_index, color_white); // 白色
-                vTaskDelay(200 / portTICK_PERIOD_MS); // 延迟
-            }
-            led_set_off(strip); // 关闭
-        }
-    }
-}
 

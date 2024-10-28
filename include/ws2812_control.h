@@ -10,13 +10,33 @@
 extern "C" {
 #endif
 
-
 // led_color_t 结构体表示 LED 灯的颜色
 typedef struct {
     uint32_t red;
     uint32_t green;
     uint32_t blue;
 } led_color_t;
+
+// 定义颜色宏
+#define COLOR_WHITE  (led_color_t){255, 255, 255}  // 白色
+#define COLOR_GREEN  (led_color_t){0, 255, 0}      // 绿色
+#define COLOR_RED    (led_color_t){255, 0, 0}      // 红色
+#define COLOR_BLUE   (led_color_t){0, 0, 255}      // 蓝色
+#define COLOR_YELLOW (led_color_t){255, 255, 0}    // 黄色
+#define COLOR_CYAN   (led_color_t){0, 255, 255}    // 青色
+#define COLOR_MAGENTA (led_color_t){255, 0, 255}   // 洋红色
+#define COLOR_BLACK  (led_color_t){0, 0, 0}        // 黑色
+#define COLOR_ORANGE (led_color_t){255, 165, 0}    // 橙色
+#define COLOR_PURPLE (led_color_t){128, 0, 128}    // 紫色
+#define COLOR_PINK   (led_color_t){255, 192, 203}  // 粉色
+#define COLOR_GRAY   (led_color_t){128, 128, 128}  // 灰色
+#define COLOR_BROWN  (led_color_t){165, 42, 42}    // 棕色
+#define COLOR_LIME   (led_color_t){0, 255, 0}      // 酸橙绿
+#define COLOR_TEAL   (led_color_t){0, 128, 128}    // 蓝绿色
+#define COLOR_NAVY   (led_color_t){0, 0, 128}      // 海军蓝
+#define COLOR_FUCHSIA (led_color_t){255, 0, 255}   // 紫红色
+#define COLOR_MAROON (led_color_t){128, 0, 0}      // 栗色
+#define COLOR_OLIVE  (led_color_t){128, 128, 0}    // 橄榄绿
 
 // led_effect_t 枚举类型表示 LED 灯的效果类型
 typedef enum {
@@ -36,32 +56,9 @@ typedef enum {
     LED_EFFECT_RAINBOW
 } led_effect_t;
 
-// 灯运行各种状态
-enum {
-    LED_WAITING = 0,  // 等待启动
-    LED_RUNNING,      // 亮灯
-    LED_STOP          // 熄灯
-};
 
-// 接收数据队列抛出
-extern QueueHandle_t ws2812_queue;
-
-typedef struct {
-    float theta;    //自定义接受数据类型
-} ws2812_recv_data_t;
-/*
-    // 在app_main 创建消息队列
-    ws2812_queue = xQueueCreate(10, sizeof(ws2812_recv_data_t));
-    if (ws2812_queue == NULL) {
-        ESP_LOGE(TAG, "消息队列创建失败");
-        return;
-    }
-*/
-
-
-
-led_strip_t* ws2812_init(); // WS2812初始化
-void ws2812_control_task(void *arg);                    // WS2812控制任务
+led_strip_t* ws2812_create(); // WS2812初始化
+void set_led_color(led_strip_t *strip,int index, led_color_t color);    // 设置 LED 颜色(单个)
 void led_set_on(led_strip_t *strip, led_color_t color); // LED 常亮
 void led_set_off(led_strip_t *strip);       // LED 关闭
 void led_set_breath(led_strip_t *strip, led_color_t color); // LED 呼吸效果
