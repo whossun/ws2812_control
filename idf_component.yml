@@ -1,0 +1,10 @@
+version: 1.0.0
+license: "MIT"
+description: my_component
+url: https://github.com/my_Namespace/my_component
+files:
+  exclude:
+  - .git
+dependencies:
+  idf:
+    version: ">=5.3.1"
