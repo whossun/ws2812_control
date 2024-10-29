@@ -21,7 +21,6 @@ static const char *TAG = "WS2812_control";
 #define RMT_TX_CHANNEL RMT_CHANNEL_0
 #define EXAMPLE_CHASE_SPEED_MS (240)
 
-QueueHandle_t ws2812_queue=NULL;
 
 /**
 *@brief 简单的辅助函数，将 HSV 颜色空间转换为 RGB 颜色空间
