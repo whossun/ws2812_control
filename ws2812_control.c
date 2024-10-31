@@ -212,6 +212,39 @@ void ws2812_set(led_strip_t *strip, led_color_t color, led_effect_t effect){
     }
 }
 
+// 设置 LED 跑马灯（从 index_start 到 index_end）
+void set_led_color_gradient(led_strip_t *strip, int index_start, int index_end, led_color_t color, int delay_ms) {
+
+    if (index_start < 0 || index_end < 0 || index_start >= CONFIG_EXAMPLE_STRIP_LED_NUMBER || index_end >= CONFIG_EXAMPLE_STRIP_LED_NUMBER ) {
+        ESP_LOGE(TAG, "无效的 LED 索引");
+        return; // 参数检查
+    }
+
+    // 逐个亮起 LED
+    if (index_start < index_end) {
+        // 从 index_start 到 index_end
+        for (int i = index_start; i <= index_end; i++) {
+            ESP_ERROR_CHECK(strip->set_pixel(strip, i, color.red, color.green, color.blue));
+            ESP_ERROR_CHECK(strip->refresh(strip, delay_ms)); // 刷新显示
+            
+            // 延迟以控制亮起速度
+            vTaskDelay(pdMS_TO_TICKS(delay_ms));
+        }
+    } else {
+        // 从 index_start 到 index_end
+        for (int i = index_start; i >= index_end; i--) {
+            ESP_ERROR_CHECK(strip->set_pixel(strip, i, color.red, color.green, color.blue));
+            ESP_ERROR_CHECK(strip->refresh(strip, delay_ms)); // 刷新显示
+            
+            // 延迟以控制亮起速度
+            vTaskDelay(pdMS_TO_TICKS(delay_ms));
+        }
+    }
+
+    // 确保最终的 LED 关闭
+    led_set_off(strip);
+}
+
 // 更新LED显示
 void update_led_display(led_strip_t *strip) {
     strip->refresh(strip, 100);

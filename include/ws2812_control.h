@@ -147,7 +147,16 @@ void led_set_rainbow(led_strip_t *strip);
  * @param effect - LED的效果类型
  */
 void ws2812_set(led_strip_t *strip, led_color_t color, led_effect_t effect);
-
+/**
+ * @brief LED跑马灯效果
+ * 
+ * @param strip - WS2812控制句柄
+ * @param index_start - 开始的LED索引
+ * @param index_end   - 结束的LED索引
+ * @param color       - LED的颜色
+ * @param delay_ms    - 延迟时间
+ */
+void set_led_color_gradient(led_strip_t *strip, int index_start, int index_end, led_color_t color, int delay_ms);
 /**
  * @brief 更新LED显示
  * 
