@@ -1,16 +1,66 @@
-# Kconfig
 menu "ws2812 config"
 
-    config EXAMPLE_RMT_TX_GPIO
+    choice WS2812_MODE
+        prompt "ws2812 mode (Strip mode, Matrix mode)"
+        default WS2812_MODE_STRIP
+        help
+            Select the mode of the matrix.
+
+        config WS2812_MODE_STRIP
+            bool "Strip mode"
+            help
+                Select strip mode (single WS2812 strip).
+
+        config WS2812_MODE_MATRIX
+            bool "Matrix mode"
+            help
+                Select WS2812 mode (matrix of WS2812 LEDs).
+    endchoice
+
+    config WS2812_TX_GPIO
         int "GPIO number for ws2812 TX"
         default 33
         help
             GPIO number for the number TX signal.
+            
+    if WS2812_MODE_STRIP
+        config WS2812_STRIP_LED_NUMBER
+            int "Number of LEDs in the strip"
+            default 12
+            help
+                Number of LEDs in the WS2812 LED strip.
+    endif
 
-    config EXAMPLE_STRIP_LED_NUMBER
-        int "Number of LEDs in the strip"
-        default 12
-        help
-            Number of LEDs in the WS2812 LED strip.
+    if WS2812_MODE_MATRIX
+        config WS2812_MATRIX_WIDTH
+            int "Matrix width (number of LEDs per row)"
+            default 8
+            help
+                Number of LEDs in each row of the matrix.
+
+        config WS2812_MATRIX_HEIGHT
+            int "Matrix height (number of LEDs per column)"
+            default 8
+            help
+                Number of LEDs in each column of the matrix.
+
+        config WS2812_TILES_X
+            int "Number of horizontal tiles"
+            default 1
+            help
+                Number of horizontal tiles in the matrix.
+
+        config WS2812_TILES_Y
+            int "Number of vertical tiles"
+            default 1
+            help
+                Number of vertical tiles in the matrix.
+
+        config WS2812_MATRIX_TYPE
+            int "Matrix type (layout and orientation)"
+            default 0
+            help
+                Type of the matrix layout and orientation.
+    endif
 
 endmenu

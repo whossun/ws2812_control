@@ -5,7 +5,7 @@
 本项目提供了一个用于控制 WS2812 LED 灯条的库，适用于 ESP32系列微控制器。该库包含了多种效果，如呼吸、渐变、闪烁和彩虹效果，以及基本的开关功能。设计时考虑了模块化和易集成性，方便在其他项目中使用。
 
 ## 功能特性
-
+- **支持WS2812矩阵屏**：适用于创建多种排列和大小的 LED 矩阵。
 - **HSV 到 RGB 转换**：提供了一个辅助函数，用于将 HSV 颜色空间转换为 RGB 颜色空间。
 - **多种 LED 效果**：支持常亮、关闭、呼吸、渐入、慢闪、快闪和彩虹效果。
 - **单个 LED 控制**：可以单独设置某个 LED 的颜色。
@@ -14,78 +14,98 @@
 
 ## 使用方法
 
-### 1. 创建 WS2812 控制句柄
+### 1. 配置WS2812参数
+在menuconfig中配置WS2812参数，进入menuconfig找到ws2812 config菜单，此配置菜单用于设置 WS2812 LED 的信号引脚和工作模式，工作模式包括条形模式（Strip mode）和矩阵模式（Matrix mode）。根据所选的模式，您还可以配置相关参数，在条形模式（Strip mode）下只需要配置 LED 的数量即可，而在矩阵模式（Matrix mode）下，您还需要配置以下参数：
+
+1. **矩阵宽度**：设置矩阵中每行的 LED 数量。
+2. **矩阵高度**：设置矩阵中每列的 LED 数量。
+3. **水平拼接数**：定义水平方向上的拼接块数量，用于更大面积的矩阵布局。
+4. **垂直拼接数**：定义垂直方向上的拼接块数量。
+5. **矩阵布局类型**：指定矩阵的布局类型和方向，以便灵活支持不同的安装方式。
+
+配置完成后，保存并退出 `menuconfig`，即可按照设定的模式和参数控制 WS2812 LED。
+
+### 2. 创建 WS2812 控制句柄
 
 首先，需要创建一个 WS2812 控制句柄，用于后续的 LED 控制操作。
 
 ```c
-led_strip_t* strip = ws2812_create();
+ws2812_strip_t* WS2812=ws2812_create();
 ```
 
-### 2. 设置 LED 效果
+### 3. 设置 LED 效果
 
 可以通过调用 `ws2812_set` 函数来设置 LED 的效果。例如，设置所有 LED 为常亮状态，颜色为红色：
 
 ```c
-led_color_t color = COLOR_RED;
-led_effect_t effect = LED_EFFECT_ON;
-ws2812_set(strip, color, effect);
+//方式1
+ws2812_set(WS2812, COLOR_RED, LED_EFFECT_ON);
+//方式2
+led_set_on(WS2812,COLOR_RED);
+//也可使用COLOR_RGB(255,0,0)来设置红色或自定义颜色
+led_set_on(WS2812,COLOR_RGB(255,0,0));
 ```
 
-### 3. 其他功能
+### 4. 常用功能
 
 - **设置单个 LED 颜色**：
 
   ```c
-  set_led_color(strip, 0, COLOR_GREEN); // 设置第0个LED为绿色
+  set_led_color(WS2812, 0, COLOR_GREEN); // 设置第0个LED为绿色
   ```
 
 - **关闭所有 LED**：
 
   ```c
-  led_set_off(strip);
+  led_set_off(WS2812);
   ```
 
 - **呼吸效果**：
 
   ```c
-  led_set_breath(strip, COLOR_BLUE);
+  //方式1
+  ws2812_set(WS2812, COLOR_BLUE, LED_EFFECT_BREATH);
+  //方式2
+  led_set_breath(WS2812, COLOR_BLUE);
   ```
 
 - **彩虹效果**：
 
   ```c
-  led_set_rainbow(strip);
+  //方式1
+  ws2812_set(WS2812, COLOR_BLUE, LED_EFFECT_RAINBOW);
+  //方式2
+  led_set_rainbow(WS2812);
   ```
 
+
+#### `ws2812_set()`第三个参数 模式可设置以下效果
+>
+    LED_EFFECT_ON             // 使LED灯常亮效果
+    LED_EFFECT_BREATH,        // 使LED灯呼吸效果
+    LED_EFFECT_FADE_IN,       // 使LED灯淡入效果
+    LED_EFFECT_BLINK_SLOW,    // 使LED灯慢闪烁效果
+    LED_EFFECT_BLINK_FAST,    // 使LED灯快闪烁效果
+    LED_EFFECT_RAINBOW        // 使LED灯彩虹效果
+
+需注意`ws2812_set()`的配置应用于所有灯珠
+
+更多API请参考 [ws2812_control.h](include\ws2812_control.h) 文件
 ## 示例代码
 
-以下是一个简单的示例代码，展示了如何使用该库控制 WS2812 LED 灯条：
+以下是此库的示例代码，
 
 ```c
-#include "ws2812_control.h"
+#include <stdio.h>
+#include <ws2812_control.h>
 
-void app_main() {
-    led_strip_t* strip = ws2812_create();
+void app_main(void){
 
-    // 设置所有 LED 为常亮状态，颜色为红色
-    led_color_t color = COLOR_RED;
-    led_effect_t effect = LED_EFFECT_ON;
-    ws2812_set(strip, color, effect);
-
-    // 等待一段时间
-    vTaskDelay(pdMS_TO_TICKS(2000));
-
-    // 设置呼吸效果
-    effect = LED_EFFECT_BREATH;
-    ws2812_set(strip, color, effect);
-
-    // 等待一段时间
-    vTaskDelay(pdMS_TO_TICKS(5000));
-
-    // 关闭所有 LED
-    effect = LED_EFFECT_OFF;
-    ws2812_set(strip, color, effect);
+    // 创建一个WS2812灯带
+    ws2812_strip_t* WS2812=ws2812_create();
+    
+    //点亮灯带 颜色(255,0,0)
+    led_set_on(WS2812,COLOR_RGB(255,0,0));
 }
 ```
 

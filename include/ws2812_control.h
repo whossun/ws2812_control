@@ -16,19 +16,16 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "sdkconfig.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// led_color_t 结构体表示 LED 灯的颜色
-typedef struct {
-    uint32_t red;
-    uint32_t green;
-    uint32_t blue;
-} led_color_t;
+typedef led_strip_t ws2812_strip_t;
 
-// 定义颜色宏
+// 定义颜色宏 
+#define COLOR_RGB(r, g, b) ((led_color_t){(r), (g), (b)})   //自定义RGB颜色
 #define COLOR_WHITE  (led_color_t){255, 255, 255}  // 白色
 #define COLOR_GREEN  (led_color_t){0, 255, 0}      // 绿色
 #define COLOR_RED    (led_color_t){255, 0, 0}      // 红色
@@ -49,6 +46,18 @@ typedef struct {
 #define COLOR_MAROON (led_color_t){128, 0, 0}      // 栗色
 #define COLOR_OLIVE  (led_color_t){128, 128, 0}    // 橄榄绿
 
+//ws2812 灯带模式结构体定义
+#ifdef CONFIG_WS2812_MODE_STRIP
+
+// led_color_t 结构体表示 LED 灯的颜色
+typedef struct {
+    uint32_t red;
+    uint32_t green;
+    uint32_t blue;
+} led_color_t;
+
+
+
 // led_effect_t 枚举类型表示 LED 灯的效果类型
 typedef enum {
     // 关闭LED灯效果
@@ -67,12 +76,38 @@ typedef enum {
     LED_EFFECT_RAINBOW
 } led_effect_t;
 
+//ws2812 矩阵屏幕模式结构体定义
+#elif defined(CONFIG_WS2812_MODE_MATRIX)
+
+//WS2812Matrix结构体子类
+typedef struct {
+    uint8_t matrixWidth;
+    uint8_t matrixHeight;
+    uint8_t tilesX;
+    uint8_t tilesY;
+    uint8_t pin;
+    uint8_t matrixType;
+} ws2812_matrix_config;
+
+//ws2812_matrix_t 结构体表示 WS2812 灯条矩阵
+typedef struct {
+    ws2812_strip_t *strip;
+    ws2812_matrix_config config;
+} ws2812_matrix_t;
+
+
+#endif
+
+
+//ws2812 灯带模式函数声明
+#ifdef CONFIG_WS2812_MODE_STRIP
+
 /**
  * @brief  创建WS2812控制句柄
  * 
- * @return led_strip_t* - WS2812控制句柄
+ * @return ws2812_strip_t* - WS2812控制句柄
  */
-led_strip_t* ws2812_create();
+ws2812_strip_t* ws2812_create();
 
 /**
  * @brief 设置单个LED的颜色
@@ -81,7 +116,7 @@ led_strip_t* ws2812_create();
  * @param index - LED的索引
  * @param color - LED的颜色
  */
-void set_led_color(led_strip_t *strip, int index, led_color_t color);
+void set_led_color(ws2812_strip_t *strip, int index, led_color_t color);
 
 /**
  * @brief 使所有LED常亮
@@ -89,14 +124,14 @@ void set_led_color(led_strip_t *strip, int index, led_color_t color);
  * @param strip - WS2812控制句柄
  * @param color - LED的颜色
  */
-void led_set_on(led_strip_t *strip, led_color_t color);
+void led_set_on(ws2812_strip_t *strip, led_color_t color);
 
 /**
  * @brief 关闭所有LED
  * 
  * @param strip - WS2812控制句柄
  */
-void led_set_off(led_strip_t *strip);
+void led_set_off(ws2812_strip_t *strip);
 
 /**
  * @brief 使所有LED呼吸效果
@@ -104,7 +139,7 @@ void led_set_off(led_strip_t *strip);
  * @param strip - WS2812控制句柄
  * @param color - LED的颜色
  */
-void led_set_breath(led_strip_t *strip, led_color_t color);
+void led_set_breath(ws2812_strip_t *strip, led_color_t color);
 
 /**
  * @brief 使所有LED缓缓亮起
@@ -112,7 +147,7 @@ void led_set_breath(led_strip_t *strip, led_color_t color);
  * @param strip - WS2812控制句柄
  * @param color - LED的颜色
  */
-void led_set_fade_in(led_strip_t *strip, led_color_t color);
+void led_set_fade_in(ws2812_strip_t *strip, led_color_t color);
 
 /**
  * @brief 使所有LED微微闪烁
@@ -121,7 +156,7 @@ void led_set_fade_in(led_strip_t *strip, led_color_t color);
  * @param color - LED的颜色
  * @param count - 闪烁次数
  */
-void led_set_blink_slow(led_strip_t *strip, led_color_t color, int count);
+void led_set_blink_slow(ws2812_strip_t *strip, led_color_t color, int count);
 
 /**
  * @brief 使所有LED快速闪烁
@@ -130,14 +165,14 @@ void led_set_blink_slow(led_strip_t *strip, led_color_t color, int count);
  * @param color - LED的颜色
  * @param count - 闪烁次数
  */
-void led_set_blink_fast(led_strip_t *strip, led_color_t color, int count);
+void led_set_blink_fast(ws2812_strip_t *strip, led_color_t color, int count);
 
 /**
  * @brief 使所有LED彩虹效果
  * 
  * @param strip - WS2812控制句柄
  */
-void led_set_rainbow(led_strip_t *strip);
+void led_set_rainbow(ws2812_strip_t *strip);
 
 /**
  * @brief 自选LED效果
@@ -146,7 +181,8 @@ void led_set_rainbow(led_strip_t *strip);
  * @param color - LED的颜色
  * @param effect - LED的效果类型
  */
-void ws2812_set(led_strip_t *strip, led_color_t color, led_effect_t effect);
+void ws2812_set(ws2812_strip_t *strip, led_color_t color, led_effect_t effect);
+
 /**
  * @brief LED跑马灯效果
  * 
@@ -156,13 +192,27 @@ void ws2812_set(led_strip_t *strip, led_color_t color, led_effect_t effect);
  * @param color       - LED的颜色
  * @param delay_ms    - 延迟时间
  */
-void set_led_color_gradient(led_strip_t *strip, int index_start, int index_end, led_color_t color, int delay_ms);
+void set_led_color_gradient(ws2812_strip_t *strip, int index_start, int index_end, led_color_t color, int delay_ms);
+
 /**
  * @brief 更新LED显示
  * 
  * @param strip - WS2812控制句柄
  */
-void update_led_display(led_strip_t *strip);
+void update_led_display(ws2812_strip_t *strip);
+
+
+//ws2812 矩阵屏幕模式函数声明
+#elif defined(CONFIG_WS2812_MODE_MATRIX)
+/**
+ * @brief 创建WS2812矩阵控制句柄
+ * 
+ * @return ws2812_matrix_t*
+ */
+ws2812_matrix_t* ws2812_matrix_create();
+
+
+#endif
 
 #ifdef __cplusplus
 }
