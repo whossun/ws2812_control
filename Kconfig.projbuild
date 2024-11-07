@@ -44,23 +44,50 @@ menu "ws2812 config"
             help
                 Number of LEDs in each column of the matrix.
 
-        config WS2812_TILES_X
-            int "Number of horizontal tiles"
-            default 1
+        choice WS2812_MATRIX_START_CORNER
+            prompt "Matrix start corner"
+            default WS2812_MATRIX_START_TOP_RIGHT
             help
-                Number of horizontal tiles in the matrix.
-
-        config WS2812_TILES_Y
-            int "Number of vertical tiles"
-            default 1
+                Select the starting corner of the LED matrix.
+        
+            config WS2812_MATRIX_START_TOP_LEFT
+                bool "Top left"
+        
+            config WS2812_MATRIX_START_TOP_RIGHT
+                bool "Top right"
+        
+            config WS2812_MATRIX_START_BOTTOM_LEFT
+                bool "Bottom left"
+        
+            config WS2812_MATRIX_START_BOTTOM_RIGHT
+                bool "Bottom right"
+        endchoice
+    
+        choice "Matrix Layout Orientation"
+            prompt "Matrix Layout Orientation"
+            default WS2812_MATRIX_LAYOUT_HORIZONTAL
             help
-                Number of vertical tiles in the matrix.
-
-        config WS2812_MATRIX_TYPE
-            int "Matrix type (layout and orientation)"
-            default 0
+                Choose whether the matrix is row-major or column-major.
+    
+            config WS2812_MATRIX_LAYOUT_HORIZONTAL
+                bool "Row-Major (Horizontal)"
+            
+            config WS2812_MATRIX_LAYOUT_VERTICAL
+                bool "Column-Major (Vertical)"
+        endchoice
+    
+        choice "Matrix Scan Order"
+            prompt "Matrix Scan Order"
+            default WS2812_MATRIX_SCAN_ZIGZAG
             help
-                Type of the matrix layout and orientation.
+                Choose the scanning order of the matrix lines.
+    
+            config WS2812_MATRIX_SCAN_PROGRESSIVE
+                bool "Progressive"
+            
+            config WS2812_MATRIX_SCAN_ZIGZAG
+                bool "Zigzag"
+        endchoice
     endif
 
 endmenu

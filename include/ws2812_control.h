@@ -46,15 +46,16 @@ typedef led_strip_t ws2812_strip_t;
 #define COLOR_MAROON (led_color_t){128, 0, 0}      // 栗色
 #define COLOR_OLIVE  (led_color_t){128, 128, 0}    // 橄榄绿
 
-//ws2812 灯带模式结构体定义
-#ifdef CONFIG_WS2812_MODE_STRIP
-
 // led_color_t 结构体表示 LED 灯的颜色
 typedef struct {
     uint32_t red;
     uint32_t green;
     uint32_t blue;
 } led_color_t;
+
+//ws2812 灯带模式结构体定义
+#ifdef CONFIG_WS2812_MODE_STRIP
+
 
 
 
@@ -79,12 +80,30 @@ typedef enum {
 //ws2812 矩阵屏幕模式结构体定义
 #elif defined(CONFIG_WS2812_MODE_MATRIX)
 
+/**
+ * @brief 矩阵屏幕类型，用于定义矩阵屏幕的布局和扫描方式
+ * 
+ */
+#define MATRIX_START_TOP_LEFT     0x00  // 左上角
+#define MATRIX_START_TOP_RIGHT    0x01  // 右上角
+#define MATRIX_START_BOTTOM_LEFT  0x02  // 左下角
+#define MATRIX_START_BOTTOM_RIGHT 0x03  // 右下角
+#define MATRIX_START_CORNER       0x03  // 起始角落掩码
+
+#define MATRIX_LAYOUT_HORIZONTAL  0x00  // 行优先布局
+#define MATRIX_LAYOUT_VERTICAL    0x04  // 列优先布局
+#define MATRIX_LAYOUT_AXIS        0x04  // 布局轴掩码
+
+#define MATRIX_SCAN_PROGRESSIVE   0x00  // 连续扫描（每行的像素顺序相同）
+#define MATRIX_SCAN_ZIGZAG        0x08  // 之字形扫描 （每行的像素顺序在行之间反转）
+#define MATRIX_SCAN_SEQUENCE      0x08  // 扫描顺序掩码
+
+
+
 //WS2812Matrix结构体子类
 typedef struct {
     uint8_t matrixWidth;
     uint8_t matrixHeight;
-    uint8_t tilesX;
-    uint8_t tilesY;
     uint8_t pin;
     uint8_t matrixType;
 } ws2812_matrix_config;
@@ -116,7 +135,7 @@ ws2812_strip_t* ws2812_create();
  * @param index - LED的索引
  * @param color - LED的颜色
  */
-void set_led_color(ws2812_strip_t *strip, int index, led_color_t color);
+void led_set_pixel(ws2812_strip_t *strip, int index, led_color_t color);
 
 /**
  * @brief 使所有LED常亮
@@ -210,6 +229,19 @@ void update_led_display(ws2812_strip_t *strip);
  * @return ws2812_matrix_t*
  */
 ws2812_matrix_t* ws2812_matrix_create();
+
+/**
+ * @brief 设置单个LED的颜色
+ * 
+ * @param matrix - WS2812控制句柄
+ * @param x - led灯珠x坐标
+ * @param y - led灯珠y坐标
+ * @param color - LED的颜色
+ */
+void led_matrix_set_pixel(ws2812_matrix_t *matrix, int x, int y, led_color_t color);
+
+
+
 
 
 #endif

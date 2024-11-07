@@ -103,7 +103,7 @@ ws2812_strip_t* ws2812_create() {
 }
 
 // 设置 LED 颜色(单个)
-void set_led_color(ws2812_strip_t *strip,int index, led_color_t color) {
+void led_set_pixel(ws2812_strip_t *strip,int index, led_color_t color) {
     if (index >= 0 && index < CONFIG_WS2812_STRIP_LED_NUMBER) {
         ESP_ERROR_CHECK(strip->set_pixel(strip, index,color.red, color.green, color.blue));
     }
@@ -286,10 +286,32 @@ ws2812_matrix_t* ws2812_matrix_create() {
 
     matrix->config.matrixWidth = CONFIG_WS2812_MATRIX_WIDTH;
     matrix->config.matrixHeight = CONFIG_WS2812_MATRIX_HEIGHT;
-    matrix->config.tilesX = CONFIG_WS2812_TILES_X;
-    matrix->config.tilesY = CONFIG_WS2812_TILES_Y;
     matrix->config.pin = CONFIG_WS2812_TX_GPIO;
-    matrix->config.matrixType = CONFIG_WS2812_MATRIX_TYPE;
+
+    // 设置起始角落
+    #if defined(CONFIG_WS2812_MATRIX_START_TOP_LEFT)
+        matrix->config.matrixType = MATRIX_START_TOP_LEFT;
+    #elif defined(CONFIG_WS2812_MATRIX_START_TOP_RIGHT)
+        matrix->config.matrixType = MATRIX_START_TOP_RIGHT;
+    #elif defined(CONFIG_WS2812_MATRIX_START_BOTTOM_LEFT)
+        matrix->config.matrixType = MATRIX_START_BOTTOM_LEFT;
+    #elif defined(CONFIG_WS2812_MATRIX_START_BOTTOM_RIGHT)
+        matrix->config.matrixType = MATRIX_START_BOTTOM_RIGHT;
+    #endif
+
+    // 设置布局方向
+    #if defined(CONFIG_WS2812_MATRIX_LAYOUT_HORIZONTAL)
+        matrix->config.matrixType |= MATRIX_LAYOUT_HORIZONTAL;
+    #elif defined(CONFIG_WS2812_MATRIX_LAYOUT_VERTICAL)
+        matrix->config.matrixType |= MATRIX_LAYOUT_VERTICAL;
+    #endif
+
+    // 设置扫描顺序
+    #if defined(CONFIG_WS2812_MATRIX_SCAN_PROGRESSIVE)
+        matrix->config.matrixType |= MATRIX_SCAN_PROGRESSIVE;
+    #elif defined(CONFIG_WS2812_MATRIX_SCAN_ZIGZAG)
+        matrix->config.matrixType |= MATRIX_SCAN_ZIGZAG;
+    #endif
 
     // 初始化RMT配置
     rmt_config_t config = RMT_DEFAULT_CONFIG_TX(CONFIG_WS2812_TX_GPIO, RMT_TX_CHANNEL);
@@ -299,7 +321,10 @@ ws2812_matrix_t* ws2812_matrix_create() {
     ESP_ERROR_CHECK(rmt_driver_install(config.channel, 0, 0));
 
     // 初始化LED条配置
-    led_strip_config_t strip_config = LED_STRIP_DEFAULT_CONFIG(CONFIG_WS2812_MATRIX_WIDTH * CONFIG_WS2812_MATRIX_HEIGHT * CONFIG_WS2812_TILES_X * CONFIG_WS2812_TILES_Y, (led_strip_dev_t)config.channel);
+    led_strip_config_t strip_config = LED_STRIP_DEFAULT_CONFIG(
+        CONFIG_WS2812_MATRIX_WIDTH * CONFIG_WS2812_MATRIX_HEIGHT,
+        (led_strip_dev_t)config.channel
+    );
     matrix->strip = led_strip_new_rmt_ws2812(&strip_config);
 
     if (!matrix->strip) {
@@ -310,6 +335,68 @@ ws2812_matrix_t* ws2812_matrix_create() {
 
     ESP_ERROR_CHECK(matrix->strip->clear(matrix->strip, 100));
     return matrix;
+}
+
+
+void led_matrix_set_pixel(ws2812_matrix_t *matrix, int x, int y, led_color_t color) {
+    if (!matrix || !matrix->strip) {
+        ESP_LOGE(TAG, "Matrix or strip handle is NULL");
+        return;
+    }
+
+    // 检查坐标是否在矩阵范围内
+    if (x < 0 || x >= matrix->config.matrixWidth || y < 0 || y >= matrix->config.matrixHeight) {
+        ESP_LOGE(TAG, "Coordinates out of bounds");
+        return;
+    }
+
+    int index;
+    
+    // 判断布局是行优先还是列优先
+    if (matrix->config.matrixType & MATRIX_LAYOUT_VERTICAL) {
+        // 列优先布局
+        if (matrix->config.matrixType & MATRIX_SCAN_ZIGZAG) {
+            // 之字形扫描
+            index = (y % 2 == 0) ? (y * matrix->config.matrixWidth + x) 
+                                  : (y * matrix->config.matrixWidth + (matrix->config.matrixWidth - 1 - x));
+        } else {
+            // 连续扫描
+            index = y * matrix->config.matrixWidth + x;
+        }
+    } else {
+        // 行优先布局
+        if (matrix->config.matrixType & MATRIX_SCAN_ZIGZAG) {
+            // 之字形扫描
+            index = (x % 2 == 0) ? (x * matrix->config.matrixHeight + y)
+                                  : (x * matrix->config.matrixHeight + (matrix->config.matrixHeight - 1 - y));
+        } else {
+            // 连续扫描
+            index = x * matrix->config.matrixHeight + y;
+        }
+    }
+
+    // 调整索引以处理起始角
+    switch (matrix->config.matrixType & MATRIX_START_CORNER) {
+        case MATRIX_START_TOP_RIGHT:
+            index = (matrix->config.matrixWidth * matrix->config.matrixHeight - 1) - index;
+            break;
+        case MATRIX_START_BOTTOM_LEFT:
+            index = (matrix->config.matrixHeight - 1 - y) * matrix->config.matrixWidth + x;
+            break;
+        case MATRIX_START_BOTTOM_RIGHT:
+            index = (matrix->config.matrixWidth * matrix->config.matrixHeight - 1) - index;
+            break;
+        case MATRIX_START_TOP_LEFT:
+        default:
+            // 无需调整
+            break;
+    }
+
+    // 设置指定 LED 的颜色
+    matrix->strip->set_pixel(matrix->strip, index, color.red, color.green, color.blue);
+
+    // 刷新显示以更新 LED
+    matrix->strip->refresh(matrix->strip, 100);
 }
 
 #endif
