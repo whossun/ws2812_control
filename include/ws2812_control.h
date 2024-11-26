@@ -1,8 +1,8 @@
 /**
  * @file ws2812_control.h
- * @author 宁子希
- * @brief    WS2812灯条控制
- * @version 0.1
+ * @author 宁子希 (1589326497@qq.com)
+ * @brief    WS2812灯条和矩阵屏幕控制 依赖led_strip库
+ * @version 1.2.0
  * @date 2024-08-31
  * 
  * @copyright Copyright (c) 2024
@@ -240,9 +240,19 @@ ws2812_matrix_t* ws2812_matrix_create();
  */
 void led_matrix_set_pixel(ws2812_matrix_t *matrix, int x, int y, led_color_t color);
 
+/**
+ * @brief 更新LED显示
+ * 
+ * @param matrix 
+ */
+void led_matrix_show(ws2812_matrix_t *matrix);
 
-
-
+/**
+ * @brief 清空LED显示
+ * 
+ * @param matrix 
+ */
+void led_matrix_clear(ws2812_matrix_t *matrix);
 
 #endif
 

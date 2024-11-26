@@ -1,8 +1,8 @@
 /**
  * @file ws2812_control.c
- * @author 宁子希
- * @brief    WS2812灯条控制
- * @version 0.1
+ * @author 宁子希 (1589326497@qq.com)
+ * @brief    WS2812灯条和矩阵屏幕控制 依赖led_strip库
+ * @version 1.2.0 
  * @date 2024-08-31
  * 
  * @copyright Copyright (c) 2024
@@ -394,9 +394,24 @@ void led_matrix_set_pixel(ws2812_matrix_t *matrix, int x, int y, led_color_t col
 
     // 设置指定 LED 的颜色
     matrix->strip->set_pixel(matrix->strip, index, color.red, color.green, color.blue);
+}
 
-    // 刷新显示以更新 LED
+// 刷新显示以更新 LED
+void led_matrix_show(ws2812_matrix_t *matrix) {
+    if (matrix == NULL || matrix->strip == NULL) {
+        ESP_LOGE(TAG, "Matrix or strip handle is NULL");
+        return;
+    }
     matrix->strip->refresh(matrix->strip, 100);
+}
+
+void led_matrix_clear(ws2812_matrix_t *matrix){
+
+    if (matrix == NULL || matrix->strip == NULL) {
+        ESP_LOGE(TAG, "Matrix or strip handle is NULL");
+        return;
+    }
+    matrix->strip->clear(matrix->strip,100); // 清空所有 LED
 }
 
 #endif

@@ -89,19 +89,7 @@ led_set_on(WS2812,COLOR_RGB(255,0,0));
 
 更多API请参考 [ws2812_control.h](include\ws2812_control.h) 文件
 
-## 矩阵模式（Matrix mode）使用方法
-
-矩阵模式（Matrix mode）的使用方法与条形模式（Strip mode）类似
-
-```c
-//创建ws2812矩阵控制句柄
-ws2812_matrix_t* WS2812 = ws2812_matrix_create();
-
-//设置第2行第2列的LED为红色
-led_matrix_set_pixel(WS2812,2,2,COLOR_RGB(255,0,0));
-```
-
-## 示例代码
+### 示例代码
 
 以下是此库的示例代码，
 
@@ -119,8 +107,45 @@ void app_main(void){
 }
 ```
 
-如果你使用
+## 矩阵模式（Matrix mode）使用方法
 
+矩阵模式（Matrix mode）的使用方法与条形模式（Strip mode）类似
+
+```c
+//创建ws2812矩阵控制句柄
+ws2812_matrix_t* WS2812 = ws2812_matrix_create();
+
+//设置第2行第2列的LED为红色
+led_matrix_set_pixel(WS2812,2,2,COLOR_RGB(255,0,0));
+
+//更新矩阵显示
+led_matrix_show(WS2812);
+```
+
+### 示例代码
+
+
+
+```c
+#include <stdio.h>
+#include <ws2812_control.h>
+
+void app_main(void){
+
+    //创建ws2812矩阵控制句柄
+    ws2812_matrix_t* WS2812 = ws2812_matrix_create();
+
+    //设置LED为红色
+    led_matrix_set_pixel(WS2812,0,0,COLOR_RGB(255,0,0));
+    led_matrix_set_pixel(WS2812,1,1,COLOR_RGB(255,0,0));
+    led_matrix_set_pixel(WS2812,2,2,COLOR_RGB(255,0,0));
+    led_matrix_set_pixel(WS2812,3,3,COLOR_RGB(255,0,0));
+
+    //更新矩阵显示
+    led_matrix_show(WS2812);
+}
+```
+![alt text](59333df79fe9b88a5f6df7c52084de0.jpg)
 ## 依赖项
 
 - ESP-IDF >= 4.4.7 （最新IDF 5.3.1 经过测试可用）
@@ -136,7 +161,7 @@ void app_main(void){
 
 ## 作者
 
-- 宁子希
+- 宁子希 (1589326497@qq.com)
 
 ## 版本历史
 
@@ -144,7 +169,8 @@ void app_main(void){
   - 初始版本发布
 - 1.1.0 (2024-10-31)
   - 增加跑马灯效果
-
+- 1.2.0 (2024-11-26)
+  - 增加矩阵模式
 ## 联系方式
 
 如有任何问题或建议，请通过 GitHub Issues 或电子邮件联系。
