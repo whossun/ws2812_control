@@ -63,7 +63,7 @@ led_set_on(WS2812,COLOR_RGB(255,0,0));
   //方式1
   ws2812_set(WS2812, COLOR_BLUE, LED_EFFECT_BREATH);
   //方式2
-  led_set_breath(WS2812, COLOR_BLUE);
+  led_set_breath(strip, COLOR_RGB(255, 0, 0), 10); // 红色呼吸
   ```
 
 - **彩虹效果**：
@@ -72,7 +72,7 @@ led_set_on(WS2812,COLOR_RGB(255,0,0));
   //方式1
   ws2812_set(WS2812, COLOR_BLUE, LED_EFFECT_RAINBOW);
   //方式2
-  led_set_rainbow(WS2812);
+  led_set_rainbow(strip, 20); // 20ms间隔的彩虹效果
   ```
 
 
@@ -171,6 +171,9 @@ void app_main(void){
   - 增加跑马灯效果
 - 1.2.0 (2024-11-26)
   - 增加矩阵模式
+- 1.3.0 (2025-4-27)
+  - 改进彩虹效果实现
+  - 动画led效果改由定时器实现 
 ## 联系方式
 
 如有任何问题或建议，请通过 GitHub Issues 或电子邮件联系。

@@ -2,7 +2,7 @@
  * @file ws2812_control.h
  * @author 宁子希 (1589326497@qq.com)
  * @brief    WS2812灯条和矩阵屏幕控制 依赖led_strip库
- * @version 1.2.0
+ * @version 1.3.0
  * @date 2024-08-31
  * 
  * @copyright Copyright (c) 2024
@@ -157,8 +157,9 @@ void led_set_off(ws2812_strip_t *strip);
  * 
  * @param strip - WS2812控制句柄
  * @param color - LED的颜色
+ * @param interval_ms - 呼吸时间间隔
  */
-void led_set_breath(ws2812_strip_t *strip, led_color_t color);
+void led_set_breath(ws2812_strip_t *strip, led_color_t color, uint32_t interval_ms);
 
 /**
  * @brief 使所有LED缓缓亮起
@@ -169,29 +170,21 @@ void led_set_breath(ws2812_strip_t *strip, led_color_t color);
 void led_set_fade_in(ws2812_strip_t *strip, led_color_t color);
 
 /**
- * @brief 使所有LED微微闪烁
+ * @brief 使所有LED闪烁
  * 
  * @param strip - WS2812控制句柄
  * @param color - LED的颜色
- * @param count - 闪烁次数
+ * @param interval_ms - 闪烁时间间隔
  */
-void led_set_blink_slow(ws2812_strip_t *strip, led_color_t color, int count);
-
-/**
- * @brief 使所有LED快速闪烁
- * 
- * @param strip - WS2812控制句柄
- * @param color - LED的颜色
- * @param count - 闪烁次数
- */
-void led_set_blink_fast(ws2812_strip_t *strip, led_color_t color, int count);
+void led_set_blink(ws2812_strip_t *strip, led_color_t color, uint32_t interval_ms);
 
 /**
  * @brief 使所有LED彩虹效果
  * 
  * @param strip - WS2812控制句柄
+ * @param interval_ms - 彩虹时间间隔
  */
-void led_set_rainbow(ws2812_strip_t *strip);
+void led_set_rainbow(ws2812_strip_t *strip, uint32_t interval_ms);
 
 /**
  * @brief 自选LED效果

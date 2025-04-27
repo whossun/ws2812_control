@@ -2,7 +2,7 @@
  * @file ws2812_control.c
  * @author 宁子希 (1589326497@qq.com)
  * @brief    WS2812灯条和矩阵屏幕控制 依赖led_strip库
- * @version 1.2.0 
+ * @version 1.3.0 
  * @date 2024-08-31
  * 
  * @copyright Copyright (c) 2024
@@ -15,12 +15,28 @@
 #include "driver/rmt.h"
 #include "led_strip.h"
 #include "ws2812_control.h"
+#include "esp_timer.h"
 
 static const char *TAG = "WS2812_control";
 
 #define RMT_TX_CHANNEL RMT_CHANNEL_0
 #define EXAMPLE_CHASE_SPEED_MS (240)
 
+// 定时器回调函数指针类型
+typedef void (*led_effect_func_t)(ws2812_strip_t*, led_color_t);
+
+// 定时器状态结构体
+typedef struct {
+    ws2812_strip_t* strip;
+    led_color_t color;
+    led_effect_func_t effect_func;
+    int counter;
+    bool active;
+} timer_effect_state_t;
+
+// 全局定时器状态和句柄
+static timer_effect_state_t timer_state;
+static esp_timer_handle_t led_timer;
 
 /**
 *@brief 简单的辅助函数，将 HSV 颜色空间转换为 RGB 颜色空间
@@ -79,13 +95,21 @@ void led_strip_hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t
     }
 }
 
+// 定时器回调函数
+static void led_timer_callback(void* arg){
+    if (timer_state.active && timer_state.effect_func) {
+        timer_state.effect_func(timer_state.strip, timer_state.color);
+        timer_state.counter++;
+    }
+}
+
 //ws2812 灯带模式
 #ifdef CONFIG_WS2812_MODE_STRIP
 
 // 创建WS2812控制句柄
 ws2812_strip_t* ws2812_create() {
     // 初始化WS2812控制任务
-    rmt_config_t config = RMT_DEFAULT_CONFIG_TX(CONFIG_WS2812_TX_GPIO, RMT_TX_CHANNEL);
+    rmt_config_t config = RMT_DEFAULT_CONFIG_TX((gpio_num_t)CONFIG_WS2812_TX_GPIO, RMT_TX_CHANNEL);
     config.clk_div = 2;
 
     ESP_ERROR_CHECK(rmt_config(&config));
@@ -99,11 +123,24 @@ ws2812_strip_t* ws2812_create() {
     }
 
     ESP_ERROR_CHECK(strip->clear(strip, 100));
+
+    // 初始化定时器
+    esp_timer_create_args_t timer_args = {
+        .callback = &led_timer_callback,
+        .arg = NULL,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "led_timer"
+    };
+    ESP_ERROR_CHECK(esp_timer_create(&timer_args, &led_timer));
+
     return strip;
 }
 
 // 设置 LED 颜色(单个)
 void led_set_pixel(ws2812_strip_t *strip,int index, led_color_t color) {
+    if (timer_state.active) {
+        esp_timer_stop(led_timer);
+    }
     if (index >= 0 && index < CONFIG_WS2812_STRIP_LED_NUMBER) {
         ESP_ERROR_CHECK(strip->set_pixel(strip, index,color.red, color.green, color.blue));
     }
@@ -112,6 +149,9 @@ void led_set_pixel(ws2812_strip_t *strip,int index, led_color_t color) {
 
 // LED 全部常亮
 void led_set_on(ws2812_strip_t *strip, led_color_t color) {
+    if (timer_state.active) {
+        esp_timer_stop(led_timer);
+    }
     for (int i = 0; i < CONFIG_WS2812_STRIP_LED_NUMBER; i++) {
         ESP_ERROR_CHECK(strip->set_pixel(strip, i, color.red, color.green, color.blue));
     }
@@ -120,6 +160,9 @@ void led_set_on(ws2812_strip_t *strip, led_color_t color) {
 
 // LED 关闭
 void led_set_off(ws2812_strip_t *strip) {
+    if (timer_state.active) {
+        esp_timer_stop(led_timer);
+    }
     for (int i = 0; i < CONFIG_WS2812_STRIP_LED_NUMBER; i++) {
         ESP_ERROR_CHECK(strip->set_pixel(strip, i, 0, 0, 0)); // 设置为黑色
     }
@@ -127,25 +170,51 @@ void led_set_off(ws2812_strip_t *strip) {
 }
 
 // LED 呼吸效果
-void led_set_breath(ws2812_strip_t *strip, led_color_t color) {
-    for (int i = 0; i < 256; i++) {
-        for (int j = 0; j < CONFIG_WS2812_STRIP_LED_NUMBER; j++) {
-            ESP_ERROR_CHECK(strip->set_pixel(strip, j, (color.red * i) / 255, (color.green * i) / 255, (color.blue * i) / 255));
-        }
-        ESP_ERROR_CHECK(strip->refresh(strip, 100));
-        vTaskDelay(pdMS_TO_TICKS(10)); // 调整呼吸速度
+void led_set_breath(ws2812_strip_t *strip, led_color_t color, uint32_t interval_ms) {
+    if (timer_state.active) {
+        esp_timer_stop(led_timer);
     }
-    for (int i = 255; i >= 0; i--) {
-        for (int j = 0; j < CONFIG_WS2812_STRIP_LED_NUMBER; j++) {
-            ESP_ERROR_CHECK(strip->set_pixel(strip, j, (color.red * i) / 255, (color.green * i) / 255, (color.blue * i) / 255));
+
+    // 设置定时器状态
+    timer_state.strip = strip;
+    timer_state.color = color;
+    timer_state.active = true;
+    timer_state.counter = 0;
+
+    timer_state.effect_func = [](ws2812_strip_t* strip, led_color_t color) {
+        static int brightness = 0;
+        static bool increasing = true;
+        
+        // 更新亮度
+        if (increasing) {
+            brightness++;
+            if (brightness >= 255) increasing = false;
+        } else {
+            brightness--;
+            if (brightness <= 0) increasing = true;
         }
-        ESP_ERROR_CHECK(strip->refresh(strip, 100));
-        vTaskDelay(pdMS_TO_TICKS(10)); // 调整呼吸速度
-    }
+        
+        // 设置LED亮度
+        for (int j = 0; j < CONFIG_WS2812_STRIP_LED_NUMBER; j++) {
+            ESP_ERROR_CHECK(strip->set_pixel(
+                strip, j,
+                (color.red * brightness) / 255,
+                (color.green * brightness) / 255,
+                (color.blue * brightness) / 255
+            ));
+        }
+        strip->refresh(strip, 100);
+    };
+
+    // 启动定时器，使用传入的时间间隔
+    ESP_ERROR_CHECK(esp_timer_start_periodic(led_timer, interval_ms * 1000)); // 转换为微秒
 }
 
 // LED 缓缓亮起
 void led_set_fade_in(ws2812_strip_t *strip, led_color_t color) {
+    if (timer_state.active) {
+        esp_timer_stop(led_timer);
+    }
     for (int i = 0; i < 256; i++) {
         for (int j = 0; j < CONFIG_WS2812_STRIP_LED_NUMBER; j++) {
             ESP_ERROR_CHECK(strip->set_pixel(strip, j, (color.red * i) / 255, (color.green * i) / 255, (color.blue * i) / 255));
@@ -155,52 +224,68 @@ void led_set_fade_in(ws2812_strip_t *strip, led_color_t color) {
     }
 }
 
-// LED 微微闪烁
-void led_set_blink_slow(ws2812_strip_t *strip, led_color_t color, int count) {
-    while (count--) {
-        led_set_on(strip, color);
-        vTaskDelay(pdMS_TO_TICKS(500)); // 闪烁间隔
-        led_set_off(strip);
-        vTaskDelay(pdMS_TO_TICKS(500));
+// 闪烁效果
+void led_set_blink(ws2812_strip_t *strip, led_color_t color, uint32_t interval_ms) {
+    if (timer_state.active) {
+        esp_timer_stop(led_timer);
     }
-}
 
-// LED 快速闪烁
-void led_set_blink_fast(ws2812_strip_t *strip, led_color_t color, int count) {
-    while (count--) {
-        led_set_on(strip, color);
-        vTaskDelay(pdMS_TO_TICKS(100)); // 闪烁间隔
-        led_set_off(strip);
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
+    // 设置定时器状态
+    timer_state.strip = strip;
+    timer_state.color = color;
+    timer_state.active = true;
+    timer_state.counter = 0;
+
+    timer_state.effect_func = [](ws2812_strip_t* strip, led_color_t color) {
+        static bool is_on = false;
+        
+        if (is_on) {
+            for (int i = 0; i < CONFIG_WS2812_STRIP_LED_NUMBER; i++) {
+                ESP_ERROR_CHECK(strip->set_pixel(strip, i, 0, 0, 0)); // 设置为黑色
+            }
+            ESP_ERROR_CHECK(strip->refresh(strip, 100));
+        } else {
+            for (int i = 0; i < CONFIG_WS2812_STRIP_LED_NUMBER; i++) {
+                ESP_ERROR_CHECK(strip->set_pixel(strip, i, color.red, color.green, color.blue));
+            }
+            ESP_ERROR_CHECK(strip->refresh(strip, 100));
+        }
+        is_on = !is_on;
+    };
+
+    // 启动定时器，使用传入的时间间隔
+    ESP_ERROR_CHECK(esp_timer_start_periodic(led_timer, interval_ms * 1000)); // 转换为微秒
 }
 
 // 彩虹效果
-void led_set_rainbow(ws2812_strip_t *strip) {
-    uint32_t red = 0;
-    uint32_t green = 0;
-    uint32_t blue = 0;
-    uint16_t hue = 0;
-    uint16_t start_rgb = 0;
-
-    ESP_LOGI(TAG, "LED Rainbow Chase Start");
-    while (true) {
-        for (int i = 0; i < 3; i++) {
-            for (int j = i; j < CONFIG_WS2812_STRIP_LED_NUMBER; j += 3) {
-                // 构建RGB值
-                hue = j * 360 / CONFIG_WS2812_STRIP_LED_NUMBER + start_rgb;
-                led_strip_hsv2rgb(hue, 100, 100, &red, &green, &blue);
-                // 将RGB值写入LED条驱动
-                ESP_ERROR_CHECK(strip->set_pixel(strip, j, red, green, blue));
-            }
-            // 刷新RGB值到LED
-            ESP_ERROR_CHECK(strip->refresh(strip, 100));
-            vTaskDelay(pdMS_TO_TICKS(EXAMPLE_CHASE_SPEED_MS));
-        }
-        start_rgb += 60;
-        vTaskDelay(pdMS_TO_TICKS(100));
+void led_set_rainbow(ws2812_strip_t *strip, uint32_t interval_ms) {
+    if (timer_state.active) {
+        esp_timer_stop(led_timer);
     }
+
+    // 设置定时器状态
+    timer_state.strip = strip;
+    timer_state.active = true;
+    timer_state.counter = 0;
+
+    timer_state.effect_func = [](ws2812_strip_t* strip, led_color_t color) {
+        static uint16_t hue = 0;
+        uint32_t red, green, blue;
+        
+        for (int i = 0; i < CONFIG_WS2812_STRIP_LED_NUMBER; i++) {
+            uint16_t led_hue = hue + (i * 360 / CONFIG_WS2812_STRIP_LED_NUMBER);
+            led_hue %= 360; // 确保色相值在0-359范围内
+            led_strip_hsv2rgb(led_hue, 100, 100, &red, &green, &blue);
+            ESP_ERROR_CHECK(strip->set_pixel(strip, i, red, green, blue));
+        }
+        ESP_ERROR_CHECK(strip->refresh(strip, 100));
+        hue = (hue + 1) % 360;
+    };
+
+    // 启动定时器
+    ESP_ERROR_CHECK(esp_timer_start_periodic(led_timer, interval_ms * 1000));
 }
+
 void ws2812_set(ws2812_strip_t *strip, led_color_t color, led_effect_t effect){
         // 根据不同的效果值执行相应的 LED 控制操作
     switch (effect) {
@@ -214,7 +299,7 @@ void ws2812_set(ws2812_strip_t *strip, led_color_t color, led_effect_t effect){
             break;
         case LED_EFFECT_BREATH:
             // 设置呼吸效果
-            led_set_breath(strip, color);
+            led_set_breath(strip, color ,10);
             break;
         case LED_EFFECT_FADE_IN:
             //设置渐入效果
@@ -222,22 +307,24 @@ void ws2812_set(ws2812_strip_t *strip, led_color_t color, led_effect_t effect){
             break;
         case LED_EFFECT_BLINK_SLOW:
             //设置缓慢闪烁效果
-            led_set_blink_slow(strip, color,15);
+            led_set_blink(strip, color,500);
             break;
         case LED_EFFECT_BLINK_FAST:
             // 快速闪烁效果
-            led_set_blink_fast(strip, color,15);
+            led_set_blink(strip, color,100);
             break;
         case LED_EFFECT_RAINBOW:
             // 彩虹效果
-            led_set_rainbow(strip);
+            led_set_rainbow(strip, 20);
             break;
     }
 }
 
 // 设置 LED 跑马灯（从 index_start 到 index_end）
 void set_led_color_gradient(ws2812_strip_t *strip, int index_start, int index_end, led_color_t color, int delay_ms) {
-
+    if (timer_state.active) {
+        esp_timer_stop(led_timer);
+    }
     if (index_start < 0 || index_end < 0 || index_start >= CONFIG_WS2812_STRIP_LED_NUMBER || index_end >= CONFIG_WS2812_STRIP_LED_NUMBER ) {
         ESP_LOGE(TAG, "无效的 LED 索引");
         return; // 参数检查
