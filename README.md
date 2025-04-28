@@ -1,4 +1,41 @@
-# WS2812 LED 控制库
+![alt text](image.jpg)
+<h1 align="center">🏳️‍🌈 ESP32 WS2812 Control</h1>
+
+<p align="center">
+ws2812_control是一个专为ESP32设计的WS2812 LED控制组件<br/>
+支持多种LED效果和矩阵/条形两种工作模式<br/>
+提供丰富的API接口和可配置参数
+</p>
+
+<p align="center">
+<a href="./README_EN.md">English</a>
+· 简体中文
+· <a href="https://github.com/NingZiXi/ws2812_control/releases">更新日志</a>
+· <a href="https://github.com/NingZiXi/ws2812_control/issues">反馈问题</a>
+</p>
+
+<p align="center">
+  <a href="LICENSE">
+    <img alt="License" src="https://img.shields.io/badge/License-MIT-blue.svg" />
+  </a>
+  <a href="https://www.espressif.com/">
+    <img alt="ESP32" src="https://img.shields.io/badge/ESP32-ESP32S3-77216F?logo=espressif" />
+  </a>
+  <a href="https://docs.espressif.com/projects/esp-idf/">
+    <img alt="ESP-IDF" src="https://img.shields.io/badge/ESP--IDF-v5.3+-orange.svg" />
+  </a>
+  <a href="https://www.espressif.com/">
+    <img alt="Platform" src="https://img.shields.io/badge/Platform-ESP32-green.svg" />
+  </a>
+  <a href="">
+    <img alt="Version" src="https://img.shields.io/badge/Version-v1.3.0-brightgreen.svg" />
+  </a>
+  <a href="https://github.com/NingZiXi/ws2812_control/stargazers">
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/NingZiXi/ws2812_control.svg?style=social&label=Stars" />
+  </a>
+</p>
+
+---
 
 ## 概述
 
@@ -174,6 +211,10 @@ void app_main(void){
 - 1.3.0 (2025-4-27)
   - 改进彩虹效果实现
   - 动画led效果改由定时器实现 
-## 联系方式
+## 🤝 贡献
+本项目采用 MIT 许可证，详情请参阅 [LICENSE](LICENSE) 文件。
 
-如有任何问题或建议，请通过 GitHub Issues 或电子邮件联系。
+<p align="center">
+感谢您使用 ESP32 WS2812 Control！🌈<br/>
+如果觉得项目对您有帮助，请给个 ⭐ Star 支持一下！
+</p>
