@@ -194,7 +194,7 @@ Contributions of any kind are welcome, including but not limited to code improve
 - 1.0.0 (2024-08-31)
   - Initial release
 - 1.1.0 (2024-10-31)
-  - Added running light effect
+  - Added marquee effect (led_set_marquee)
 - 1.2.0 (2024-11-26)
   - Added matrix mode
 - 1.3.0 (2025-4-27)

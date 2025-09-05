@@ -56,9 +56,6 @@ typedef struct {
 //ws2812 灯带模式结构体定义
 #ifdef CONFIG_WS2812_MODE_STRIP
 
-
-
-
 // led_effect_t 枚举类型表示 LED 灯的效果类型
 typedef enum {
     // 关闭LED灯效果
@@ -204,7 +201,7 @@ void ws2812_set(ws2812_strip_t *strip, led_color_t color, led_effect_t effect);
  * @param color       - LED的颜色
  * @param delay_ms    - 延迟时间
  */
-void set_led_color_gradient(ws2812_strip_t *strip, int index_start, int index_end, led_color_t color, int delay_ms);
+void led_set_marquee(ws2812_strip_t *strip, int index_start, int index_end, led_color_t color, int delay_ms);
 
 /**
  * @brief 更新LED显示

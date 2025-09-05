@@ -321,7 +321,7 @@ void ws2812_set(ws2812_strip_t *strip, led_color_t color, led_effect_t effect){
 }
 
 // 设置 LED 跑马灯（从 index_start 到 index_end）
-void set_led_color_gradient(ws2812_strip_t *strip, int index_start, int index_end, led_color_t color, int delay_ms) {
+void led_set_marquee(ws2812_strip_t *strip, int index_start, int index_end, led_color_t color, int delay_ms) {
     if (timer_state.active) {
         esp_timer_stop(led_timer);
     }
