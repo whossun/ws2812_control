@@ -95,6 +95,52 @@ void led_strip_hsv2rgb(uint32_t h, uint32_t s, uint32_t v, uint32_t *r, uint32_t
     }
 }
 
+/**
+*@brief 简单的辅助函数，将 RGB 颜色空间转换为 HSV 颜色空间
+*
+*@param r 红色值，范围为[0,255]
+*@param g 绿色值，范围为[0,255]
+*@param b 蓝色值，范围为[0,255]
+*@param h 指向存储色相值的指针
+*@param s 指向存储饱和度值的指针
+*@param v 指向存储亮度值的指针
+*
+*/
+void led_strip_rgb2hsv(uint32_t r, uint32_t g, uint32_t b, uint32_t *h, uint32_t *s, uint32_t *v)
+{
+    uint32_t rgb_max = (r > g && r > b) ? r : (g > b ? g : b);
+    uint32_t rgb_min = (r < g && r < b) ? r : (g < b ? g : b);
+    uint32_t delta = rgb_max - rgb_min;
+    
+    // 计算亮度值
+    *v = rgb_max / 2.55f;
+    
+    // 如果最大值为0，则饱和度和色相都为0
+    if (rgb_max == 0) {
+        *s = 0;
+        *h = 0;
+        return;
+    }
+    
+    // 计算饱和度
+    *s = (delta * 100) / rgb_max;
+    
+    // 如果delta为0，则色相为0
+    if (delta == 0) {
+        *h = 0;
+        return;
+    }
+    
+    // 计算色相
+    if (rgb_max == r) {
+        *h = (60 * ((int32_t)(g - b) / (int32_t)delta) + 360) % 360;
+    } else if (rgb_max == g) {
+        *h = (60 * ((int32_t)(b - r) / (int32_t)delta) + 120) % 360;
+    } else {
+        *h = (60 * ((int32_t)(r - g) / (int32_t)delta) + 240) % 360;
+    }
+}
+
 // 定时器回调函数
 static void led_timer_callback(void* arg){
     if (timer_state.active && timer_state.effect_func) {
@@ -353,6 +399,81 @@ void led_set_marquee(ws2812_strip_t *strip, int index_start, int index_end, led_
 
     // 确保最终的 LED 关闭
     led_set_off(strip);
+}
+
+// 全局变量用于存储渐变效果的状态
+static uint32_t gradient_start_h, gradient_start_s, gradient_start_v;
+static uint32_t gradient_end_h, gradient_end_s, gradient_end_v;
+static uint32_t gradient_steps;
+static uint32_t gradient_current_step = 0;
+
+// 渐变效果的定时器回调函数
+void gradient_effect_func(ws2812_strip_t* strip, led_color_t color) {
+    if (gradient_current_step <= gradient_steps) {
+        // 计算当前步骤的HSV值
+        uint32_t current_h, current_s, current_v;
+        
+        // 处理色相的最短路径插值
+        int32_t hue_diff = (int32_t)gradient_end_h - (int32_t)gradient_start_h;
+        if (hue_diff > 180) {
+            hue_diff -= 360;
+        } else if (hue_diff < -180) {
+            hue_diff += 360;
+        }
+        
+        current_h = (gradient_start_h + (hue_diff * (int32_t)gradient_current_step) / (int32_t)gradient_steps) % 360;
+        current_s = gradient_start_s + ((int32_t)((gradient_end_s - gradient_start_s) * gradient_current_step) / (int32_t)gradient_steps);
+        current_v = gradient_start_v + ((int32_t)((gradient_end_v - gradient_start_v) * gradient_current_step) / (int32_t)gradient_steps);
+        
+        // 将HSV转换为RGB
+        uint32_t red, green, blue;
+        led_strip_hsv2rgb(current_h, current_s, current_v, &red, &green, &blue);
+        
+        // 设置所有LED的颜色
+        for (int i = 0; i < CONFIG_WS2812_STRIP_LED_NUMBER; i++) {
+            ESP_ERROR_CHECK(strip->set_pixel(strip, i, red, green, blue));
+        }
+        ESP_ERROR_CHECK(strip->refresh(strip, 100));
+        
+        gradient_current_step++;
+        
+        // 如果达到最后一步，停止定时器
+        if (gradient_current_step > gradient_steps) {
+            gradient_current_step = 0; // 重置步骤计数器
+            esp_timer_stop(led_timer);
+        }
+    }
+}
+
+// 从一个颜色渐变到另一个颜色
+void led_set_color_gradient(ws2812_strip_t *strip, led_color_t start_color, led_color_t end_color, uint32_t duration_ms) {
+    if (timer_state.active) {
+        esp_timer_stop(led_timer);
+    }
+
+    // 将RGB颜色转换为HSV
+    led_strip_rgb2hsv(start_color.red, start_color.green, start_color.blue, &gradient_start_h, &gradient_start_s, &gradient_start_v);
+    led_strip_rgb2hsv(end_color.red, end_color.green, end_color.blue, &gradient_end_h, &gradient_end_s, &gradient_end_v);
+    
+    const uint32_t step_interval_ms = 20; // 50Hz刷新率
+    
+    gradient_steps = duration_ms / step_interval_ms;
+    
+    if (gradient_steps == 0) {
+        gradient_steps = 1;
+    }
+    
+    // 重置当前步骤计数器
+    gradient_current_step = 0;
+    
+    // 设置定时器状态
+    timer_state.strip = strip;
+    timer_state.color = start_color;
+    timer_state.effect_func = gradient_effect_func;
+    timer_state.active = true;
+    
+    uint32_t interval_us = step_interval_ms * 1000;
+    ESP_ERROR_CHECK(esp_timer_start_periodic(led_timer, interval_us));
 }
 
 // 更新LED显示

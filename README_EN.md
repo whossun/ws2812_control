@@ -28,7 +28,7 @@ English
     <img alt="Platform" src="https://img.shields.io/badge/Platform-ESP32-green.svg" />
   </a>
   <a href="">
-    <img alt="Version" src="https://img.shields.io/badge/Version-v1.3.0-brightgreen.svg" />
+    <img alt="Version" src="https://img.shields.io/badge/Version-v1.4.0-brightgreen.svg" />
   </a>
   <a href="https://github.com/NingZiXi/ws2812_control/stargazers">
     <img alt="GitHub Stars" src="https://img.shields.io/github/stars/NingZiXi/ws2812_control.svg?style=social&label=Stars" />
@@ -123,6 +123,12 @@ led_set_on(WS2812,COLOR_RGB(255,0,0));
 
 Note: `ws2812_set()` applies to all LEDs.
 
+- **Color Gradient Effect**:
+
+  ```c
+  led_set_color_gradient(WS2812, COLOR_RED, COLOR_BLUE, 1000); // Gradient from red to blue over 1000ms
+  ```
+
 For more APIs, please refer to [ws2812_control.h](include\ws2812_control.h).
 
 ### Example Code
@@ -200,6 +206,8 @@ Contributions of any kind are welcome, including but not limited to code improve
 - 1.3.0 (2025-4-27)
   - Improved rainbow effect implementation
   - Animation effects now use timer
+- 1.4.0 (2025-4-28)
+  - Added color gradient effect (led_set_color_gradient)
 
 ## 🤝 Contributing
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

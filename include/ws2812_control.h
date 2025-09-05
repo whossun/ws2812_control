@@ -210,6 +210,16 @@ void led_set_marquee(ws2812_strip_t *strip, int index_start, int index_end, led_
  */
 void update_led_display(ws2812_strip_t *strip);
 
+/**
+ * @brief 使所有LED从一个颜色渐变到另一个颜色
+ * 
+ * @param strip - WS2812控制句柄
+ * @param start_color - 起始颜色
+ * @param end_color - 结束颜色
+ * @param duration_ms - 渐变持续时间(毫秒)
+ */
+void led_set_color_gradient(ws2812_strip_t *strip, led_color_t start_color, led_color_t end_color, uint32_t duration_ms);
+
 
 //ws2812 矩阵屏幕模式函数声明
 #elif defined(CONFIG_WS2812_MODE_MATRIX)

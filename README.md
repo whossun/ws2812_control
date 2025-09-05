@@ -28,7 +28,7 @@ ws2812_control是一个专为ESP32设计的WS2812 LED控制组件<br/>
     <img alt="Platform" src="https://img.shields.io/badge/Platform-ESP32-green.svg" />
   </a>
   <a href="">
-    <img alt="Version" src="https://img.shields.io/badge/Version-v1.3.0-brightgreen.svg" />
+    <img alt="Version" src="https://img.shields.io/badge/Version-v1.4.0-brightgreen.svg" />
   </a>
   <a href="https://github.com/NingZiXi/ws2812_control/stargazers">
     <img alt="GitHub Stars" src="https://img.shields.io/github/stars/NingZiXi/ws2812_control.svg?style=social&label=Stars" />
@@ -110,6 +110,12 @@ led_set_on(WS2812,COLOR_RGB(255,0,0));
   ws2812_set(WS2812, COLOR_BLUE, LED_EFFECT_RAINBOW);
   //方式2
   led_set_rainbow(WS2812, 20); // 20ms间隔的彩虹效果
+  ```
+
+- **颜色渐变效果**：
+
+  ```c
+  led_set_color_gradient(WS2812, COLOR_RED, COLOR_BLUE, 1000); // 从红色渐变到蓝色，持续1000ms
   ```
 
 
@@ -210,7 +216,9 @@ void app_main(void){
   - 增加矩阵模式
 - 1.3.0 (2025-4-27)
   - 改进彩虹效果实现
-  - 动画led效果改由定时器实现 
+  - 动画led效果改由定时器实现
+- 1.4.0 (2025-4-28)
+  - 增加颜色渐变效果(led_set_color_gradient) 
 ## 🤝 贡献
 本项目采用 MIT 许可证，详情请参阅 [LICENSE](LICENSE) 文件。
 
