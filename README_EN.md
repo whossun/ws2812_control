@@ -100,7 +100,7 @@ led_set_on(WS2812,COLOR_RGB(255,0,0));
   // Method 1
   ws2812_set(WS2812, COLOR_BLUE, LED_EFFECT_BREATH);
   // Method 2
-  led_set_breath(strip, COLOR_RGB(255, 0, 0), 10); // Red breathing
+  led_set_breath(WS2812, COLOR_RGB(255, 0, 0), 10); // Red breathing
   ```
 
 - **Rainbow Effect**:
@@ -109,7 +109,7 @@ led_set_on(WS2812,COLOR_RGB(255,0,0));
   // Method 1
   ws2812_set(WS2812, COLOR_BLUE, LED_EFFECT_RAINBOW);
   // Method 2
-  led_set_rainbow(strip, 20); // Rainbow effect with 20ms interval
+  led_set_rainbow(WS2812, 20); // Rainbow effect with 20ms interval
   ```
 
 #### Available Effects for `ws2812_set()`
