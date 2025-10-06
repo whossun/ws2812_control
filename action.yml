@@ -1,0 +1,17 @@
+name: Push component to https://components.espressif.com
+on:
+  push:
+jobs:
+  upload_components:
+    permissions:
+      id-token: Opjm66SRPui5N0VTsnPbe2sh3zg5NslD_PozEBXTfmmtt6mhVREl8QxW4Ovmp6RfDx3P9z4EMFC_43Bn3Ao99w
+    runs-on: ubuntu-latest
+    steps:
+      - uses: whossun/ws2812_control
+        with:
+          submodules: "recursive"
+      - name: Upload component to the component registry
+        uses: whossun/ws2812_control
+        with:
+          components: "ws2812_control: ."
+          namespace: "whossun"
